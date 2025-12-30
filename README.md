@@ -326,6 +326,50 @@ npm run prisma:studio
 
 ブラウザで [http://localhost:5555](http://localhost:5555) が開きます。
 
+## 🚀 デプロイ
+
+### Cloud Runへのデプロイ
+
+このプロジェクトはGoogle Cloud Runにデプロイできます。
+
+**Makefileを使用した簡単デプロイ**:
+
+```bash
+# ヘルプを表示
+make help
+
+# 一括デプロイ（ビルド → プッシュ → デプロイ）
+make deploy-full
+
+# 個別実行
+make docker-build    # Dockerイメージをビルド
+make docker-push     # GCRにプッシュ
+make deploy          # Cloud Runにデプロイ
+```
+
+**手動デプロイ**:
+
+```bash
+# Dockerイメージをビルド
+docker build -t gcr.io/rock-terra-482808-m7/daily-report:latest .
+
+# GCRにプッシュ
+docker push gcr.io/rock-terra-482808-m7/daily-report:latest
+
+# Cloud Runにデプロイ
+gcloud run deploy daily-report \
+  --image gcr.io/rock-terra-482808-m7/daily-report:latest \
+  --platform managed \
+  --region asia-northeast1 \
+  --allow-unauthenticated
+```
+
+**CI/CD（自動デプロイ）**:
+
+`main` ブランチにプッシュすると、GitHub Actionsが自動的にCloud Runにデプロイします。
+
+詳細は [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) を参照してください。
+
 ## 📄 ライセンス
 
 Private

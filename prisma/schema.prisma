@@ -1,0 +1,121 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 営業マスタ（ユーザー）
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(100)
+  email     String   @unique @db.VarChar(255)
+  password  String   @db.VarChar(255)
+  role      UserRole
+  managerId Int?     @map("manager_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // リレーション
+  manager      User?         @relation("ManagerSubordinates", fields: [managerId], references: [id])
+  subordinates User[]        @relation("ManagerSubordinates")
+  dailyReports DailyReport[]
+  comments     Comment[]
+
+  @@index([email])
+  @@index([managerId])
+  @@map("users")
+}
+
+// ユーザーロール
+enum UserRole {
+  ADMIN // 管理者
+  MANAGER // 上長
+  SALES // 営業担当者
+
+  @@map("user_role")
+}
+
+// 顧客マスタ
+model Customer {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(100)
+  company    String   @db.VarChar(100)
+  department String?  @db.VarChar(100)
+  phone      String?  @db.VarChar(20)
+  email      String?  @db.VarChar(255)
+  address    String?  @db.VarChar(255)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // リレーション
+  visits Visit[]
+
+  @@index([company])
+  @@index([name])
+  @@map("customers")
+}
+
+// 日報
+model DailyReport {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  reportDate DateTime @map("report_date") @db.Date
+  problem    String?  @db.Text
+  plan       String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // リレーション
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  visits   Visit[]
+  comments Comment[]
+
+  @@unique([userId, reportDate], name: "user_report_date_unique")
+  @@index([reportDate])
+  @@index([userId, reportDate])
+  @@map("daily_reports")
+}
+
+// 訪問記録
+model Visit {
+  id            Int      @id @default(autoincrement())
+  dailyReportId Int      @map("daily_report_id")
+  customerId    Int      @map("customer_id")
+  visitTime     DateTime @map("visit_time") @db.Time
+  content       String   @db.VarChar(1000)
+  outcome       String?  @db.VarChar(1000)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // リレーション
+  dailyReport DailyReport @relation(fields: [dailyReportId], references: [id], onDelete: Cascade)
+  customer    Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@index([dailyReportId])
+  @@index([customerId])
+  @@map("visits")
+}
+
+// コメント
+model Comment {
+  id            Int      @id @default(autoincrement())
+  dailyReportId Int      @map("daily_report_id")
+  userId        Int      @map("user_id")
+  content       String   @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // リレーション
+  dailyReport DailyReport @relation(fields: [dailyReportId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([dailyReportId])
+  @@index([userId])
+  @@map("comments")
+}
