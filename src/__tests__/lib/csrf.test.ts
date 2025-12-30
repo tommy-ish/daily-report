@@ -5,8 +5,8 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
 // モック設定
-const mockGetIronSession = jest.fn() as jest.MockedFunction<typeof import('iron-session').getIronSession>;
-const mockCookies = jest.fn() as jest.MockedFunction<typeof import('next/headers').cookies>;
+const mockGetIronSession = jest.fn() as any;
+const mockCookies = jest.fn() as any;
 
 jest.mock('iron-session', () => ({
   getIronSession: mockGetIronSession,
