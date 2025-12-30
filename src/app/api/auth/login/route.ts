@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
           error: {
             code: 'VALIDATION_ERROR',
             message: '入力値が不正です',
-            details: result.error.errors,
+            details: result.error.issues,
           },
         },
         { status: 400 }
