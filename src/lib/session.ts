@@ -8,11 +8,43 @@ import type { SessionData, SessionOptions } from '@/types/session';
 export const SESSION_TIMEOUT = 30 * 60; // 30分 (秒単位)
 
 /**
+ * SESSION_SECRET環境変数の最小長
+ */
+const SESSION_SECRET_MIN_LENGTH = 32;
+
+/**
+ * SESSION_SECRET環境変数を検証する
+ *
+ * @throws {Error} SESSION_SECRETが設定されていない、または短すぎる場合
+ */
+function validateSessionSecret(): string {
+  const sessionSecret = process.env.SESSION_SECRET;
+
+  if (!sessionSecret) {
+    throw new Error(
+      'SESSION_SECRET environment variable is required. ' +
+        'Please set a strong random string (at least 32 characters) in your .env file. ' +
+        'You can generate one using: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+    );
+  }
+
+  if (sessionSecret.length < SESSION_SECRET_MIN_LENGTH) {
+    throw new Error(
+      `SESSION_SECRET must be at least ${SESSION_SECRET_MIN_LENGTH} characters long. ` +
+        `Current length: ${sessionSecret.length}. ` +
+        'You can generate a strong secret using: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+    );
+  }
+
+  return sessionSecret;
+}
+
+/**
  * セッション設定
  */
 export const sessionOptions: SessionOptions = {
   cookieName: 'daily-report-session',
-  password: process.env.SESSION_SECRET || 'complex_password_at_least_32_characters_long_for_security',
+  password: validateSessionSecret(),
   cookieOptions: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,

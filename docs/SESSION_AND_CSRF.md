@@ -357,14 +357,16 @@ const response = await fetch('/api/daily-reports', {
 `.env` ファイルに以下の環境変数を設定してください。
 
 ```bash
-# セッション暗号化キー（32文字以上の複雑な文字列）
-SESSION_SECRET="your-secret-key-change-this-in-production"
+# セッション暗号化キー（必須 - 32文字以上の複雑な文字列）
+SESSION_SECRET="your-secret-key-change-this-in-production-must-be-at-least-32-characters"
 
 # CSRF秘密鍵（将来的に追加の暗号化が必要な場合に使用）
 CSRF_SECRET="your-csrf-secret-change-this-in-production"
 ```
 
-**重要**: 本番環境では必ず強力なランダム文字列を設定してください。
+**重要**:
+- `SESSION_SECRET`は**必須**です。設定されていない場合、アプリケーションは起動時にエラーを投げます。
+- 32文字以上の強力なランダム文字列を設定する必要があります。
 
 ```bash
 # ランダム文字列の生成例
@@ -373,12 +375,24 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ## セキュリティ考慮事項
 
-1. **SESSION_SECRET**: 本番環境では必ず強力なランダム文字列を使用
+1. **SESSION_SECRET（必須）**:
+   - 32文字以上の強力なランダム文字列が必須
+   - 設定されていない、または短すぎる場合、アプリケーション起動時にエラーが発生
+   - 本番環境では必ず暗号学的に安全なランダム値を使用
+
 2. **HTTPS**: 本番環境では必ずHTTPSを使用（Cookieの `secure` 属性がtrueになる）
+
 3. **タイムアウト**: セッションタイムアウトは30分に設定されており、最終アクティビティから30分経過すると自動的にログアウト
-4. **CSRF保護**: すべての変更系リクエスト（POST/PUT/DELETE）でCSRFトークンが必要
+
+4. **CSRF保護**:
+   - すべての変更系リクエスト（POST/PUT/DELETE）でCSRFトークンが必要
+   - **タイミング攻撃対策**: `crypto.timingSafeEqual`を使用した定数時間比較により、トークン比較時のタイミング攻撃を防止
+
 5. **HttpOnly Cookie**: セッションCookieは `httpOnly` 属性により、JavaScriptからアクセス不可
+
 6. **SameSite属性**: `lax` に設定されており、クロスサイトリクエストからの保護
+
+7. **暗号化**: セッションデータは `iron-session` により暗号化され、改ざんから保護
 
 ## テスト
 
@@ -394,9 +408,32 @@ npm run test:coverage
 
 ## トラブルシューティング
 
+### アプリケーションが起動しない（SESSION_SECRETエラー）
+
+**エラー**: `SESSION_SECRET environment variable is required`
+
+**原因**: `SESSION_SECRET`環境変数が設定されていません。
+
+**解決方法**:
+1. `.env`ファイルを作成（または既存のファイルを編集）
+2. 以下のコマンドで強力なランダム文字列を生成:
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+3. 生成された文字列を`.env`ファイルに追加:
+   ```
+   SESSION_SECRET="生成された文字列"
+   ```
+
+**エラー**: `SESSION_SECRET must be at least 32 characters long`
+
+**原因**: `SESSION_SECRET`が32文字未満です。
+
+**解決方法**: 上記と同じ方法で32文字以上のランダム文字列を生成して設定してください。
+
 ### セッションが保存されない
 
-- `SESSION_SECRET` が設定されているか確認
+- `SESSION_SECRET` が正しく設定されているか確認（32文字以上）
 - Cookieが正しく送信されているか確認（ブラウザの開発者ツールで確認）
 - 本番環境でHTTPSを使用しているか確認
 
@@ -405,6 +442,7 @@ npm run test:coverage
 - リクエストヘッダーに `X-CSRF-Token` が含まれているか確認
 - トークンがログイン時に取得されているか確認
 - セッションがタイムアウトしていないか確認
+- トークンの長さや形式が正しいか確認（UUIDv4形式）
 
 ### セッションタイムアウトが早すぎる
 

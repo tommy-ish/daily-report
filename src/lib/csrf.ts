@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { getSession } from './session';
 
@@ -21,7 +22,10 @@ export async function generateCsrfToken(): Promise<string> {
 }
 
 /**
- * CSRFトークンを検証する
+ * CSRFトークンを検証する（タイミング攻撃対策）
+ *
+ * タイミング攻撃を防ぐため、crypto.timingSafeEqualを使用して
+ * 定数時間でトークンを比較します。
  */
 export async function verifyCsrfToken(token: string | null | undefined): Promise<boolean> {
   if (!token) {
@@ -35,8 +39,24 @@ export async function verifyCsrfToken(token: string | null | undefined): Promise
     return false;
   }
 
-  // トークンが一致するか確認
-  return session.csrfToken === token;
+  try {
+    // 両方のトークンをBufferに変換
+    const tokenBuffer = Buffer.from(token, 'utf8');
+    const sessionTokenBuffer = Buffer.from(session.csrfToken, 'utf8');
+
+    // 長さが異なる場合は即座にfalseを返す
+    // （timingSafeEqualは同じ長さのBufferが必要）
+    if (tokenBuffer.length !== sessionTokenBuffer.length) {
+      return false;
+    }
+
+    // 定数時間で比較（タイミング攻撃対策）
+    return timingSafeEqual(tokenBuffer, sessionTokenBuffer);
+  } catch (error) {
+    // エラーが発生した場合はfalseを返す
+    console.error('CSRF token verification error:', error);
+    return false;
+  }
 }
 
 /**
