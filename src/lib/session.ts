@@ -1,5 +1,6 @@
 import { getIronSession, IronSession } from 'iron-session';
 import { cookies } from 'next/headers';
+
 import type { SessionData, SessionOptions } from '@/types/session';
 
 /**
@@ -58,7 +59,7 @@ export const sessionOptions: SessionOptions = {
  * セッションを取得する
  */
 export async function getSession(): Promise<IronSession<SessionData>> {
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
   const session = await getIronSession<SessionData>(cookieStore, sessionOptions);
 
   return session;
