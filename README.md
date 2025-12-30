@@ -25,27 +25,84 @@
 
 - Node.js 18.x 以上
 - npm 9.x 以上
+- PostgreSQL 16 以上（またはDocker）
 
 ### インストール
 
+#### 1. リポジトリのクローンと依存関係のインストール
+
 ```bash
 # 依存関係のインストール
-npm install
+npm install --legacy-peer-deps
+```
 
-# 環境変数の設定
+#### 2. PostgreSQLのセットアップ
+
+**Dockerを使用する場合（推奨）**:
+
+```bash
+# PostgreSQLコンテナを起動
+docker run --name daily-report-db \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=daily_report \
+  -p 5432:5432 \
+  -d postgres:16
+
+# コンテナが起動していることを確認
+docker ps | grep daily-report-db
+```
+
+**ローカルのPostgreSQLを使用する場合**:
+
+```bash
+# PostgreSQLにログインしてデータベースを作成
+psql -U postgres
+CREATE DATABASE daily_report;
+\q
+```
+
+#### 3. 環境変数の設定
+
+```bash
+# .env.exampleをコピー
 cp .env.example .env
-# .envファイルを編集してDATABASE_URLを設定
 
+# .envファイルを編集してDATABASE_URLを設定
+# Dockerを使用する場合:
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/daily_report?schema=public"
+
+# ローカルPostgreSQLの場合（適宜ユーザー名/パスワードを変更）:
+DATABASE_URL="postgresql://your_user:your_password@localhost:5432/daily_report?schema=public"
+```
+
+#### 4. データベースのマイグレーションと初期データ投入
+
+```bash
 # Prismaクライアントの生成
 npm run prisma:generate
 
-# データベースマイグレーション
+# データベースマイグレーション実行
 npm run prisma:migrate
 
-# 初期データの投入（オプション）
+# 初期データの投入（テスト用ユーザーと顧客データ）
 npm run prisma:seed
+```
 
-# 開発サーバーの起動
+初期データとして以下のユーザーが作成されます（全てパスワード: `Test1234!`）：
+
+| メールアドレス    | 役割   | 名前     |
+| ----------------- | ------ | -------- |
+| admin@test.com    | 管理者 | 管理太郎 |
+| manager1@test.com | 上長   | 上長一郎 |
+| manager2@test.com | 上長   | 上長二郎 |
+| sales1@test.com   | 営業   | 営業一郎 |
+| sales2@test.com   | 営業   | 営業二郎 |
+| sales3@test.com   | 営業   | 営業三郎 |
+
+#### 5. 開発サーバーの起動
+
+```bash
 npm run dev
 ```
 
@@ -297,6 +354,10 @@ git commit -m "docs: READMEにテスト実行方法を追加"
 
 ### データベースセットアップ
 
+詳細なセットアップ手順は上記の「📦 セットアップ」セクションを参照してください。
+
+**クイックリファレンス**:
+
 ```bash
 # PostgreSQLの起動（Dockerを使用する場合）
 docker run --name daily-report-db \
@@ -369,6 +430,152 @@ gcloud run deploy daily-report \
 `main` ブランチにプッシュすると、GitHub Actionsが自動的にCloud Runにデプロイします。
 
 詳細は [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) を参照してください。
+
+## 🔧 トラブルシューティング
+
+### データベース接続エラー
+
+**エラー**: `P1000: Authentication failed against database server`
+
+**原因**: DATABASE_URLの認証情報が正しくない
+
+**解決方法**:
+
+```bash
+# Dockerコンテナの環境変数を確認
+docker inspect daily-report-db | grep -A 10 Env
+
+# .envファイルのDATABASE_URLを正しい認証情報に更新
+# 例: postgresql://postgres:postgres@localhost:5432/daily_report?schema=public
+```
+
+### ポート競合エラー
+
+**エラー**: `docker: Error response from daemon: Bind for 127.0.0.1:5432 failed: port is already allocated`
+
+**原因**: ポート5432が既に使用されている
+
+**解決方法**:
+
+```bash
+# 既存のPostgreSQLコンテナを確認
+docker ps | grep postgres
+
+# 既存のコンテナを使用する場合
+docker exec -it <container-name> psql -U postgres -c "CREATE DATABASE daily_report;"
+
+# または既存のコンテナを停止して新しく作成
+docker stop <container-name>
+docker rm <container-name>
+# その後、セットアップ手順の2を実行
+```
+
+### マイグレーションがハングする
+
+**エラー**: `npm run prisma:migrate` がタイムアウトする
+
+**解決方法**:
+
+```bash
+# プロセスを停止（Ctrl+C）して、明示的にマイグレーション名を指定
+npx prisma migrate dev --name init
+
+# または既存のマイグレーションを適用
+npx prisma migrate deploy
+```
+
+### npm installでエラーが発生
+
+**エラー**: 依存関係の競合エラー
+
+**解決方法**:
+
+```bash
+# --legacy-peer-depsフラグを使用
+npm install --legacy-peer-deps
+
+# それでも解決しない場合は、node_modulesとpackage-lock.jsonを削除して再インストール
+rm -rf node_modules package-lock.json
+npm install --legacy-peer-deps
+```
+
+### Prismaクライアント生成エラー
+
+**エラー**: `@prisma/client` が見つからない
+
+**解決方法**:
+
+```bash
+# Prismaクライアントを再生成
+npm run prisma:generate
+
+# それでも解決しない場合は、Prismaを再インストール
+npm install @prisma/client --legacy-peer-deps
+npm run prisma:generate
+```
+
+### GitHub Actions エラー
+
+**エラー**: `actions/upload-artifact@v3` または `codecov/codecov-action@v3` の非推奨警告
+
+**解決方法**:
+
+これらのアクションはv4に更新済みです。最新の `main` ブランチをプルしてください。
+
+```bash
+git checkout main
+git pull origin main
+```
+
+### 環境変数が読み込まれない
+
+**原因**: .envファイルが作成されていない、または間違った場所にある
+
+**解決方法**:
+
+```bash
+# プロジェクトルートに.envファイルがあることを確認
+ls -la .env
+
+# ない場合は.env.exampleからコピー
+cp .env.example .env
+
+# 必要な環境変数が設定されていることを確認
+cat .env | grep DATABASE_URL
+```
+
+### テスト実行時のエラー
+
+**エラー**: テストが失敗する、またはタイムアウトする
+
+**解決方法**:
+
+```bash
+# キャッシュをクリアしてテストを再実行
+npm test -- --clearCache
+npm test
+
+# E2Eテストの場合、Playwrightブラウザをインストール
+npx playwright install --with-deps
+```
+
+### その他の問題
+
+上記で解決しない場合は、以下を試してください：
+
+1. Node.jsとnpmのバージョンを確認（Node.js 18.x以上、npm 9.x以上）
+2. PostgreSQLが正しく起動しているか確認（`docker ps` または `pg_isready`）
+3. `.env`ファイルが正しく設定されているか確認
+4. プロジェクトを完全にクリーンして再セットアップ：
+
+```bash
+# クリーンアップ
+rm -rf node_modules package-lock.json .next
+docker stop daily-report-db
+docker rm daily-report-db
+
+# 再セットアップ（セットアップ手順の1から実行）
+```
 
 ## 📄 ライセンス
 
