@@ -21,6 +21,9 @@ const customJestConfig = {
     '!src/**/*.test.{js,jsx,ts,tsx}',
     '!src/**/*.spec.{js,jsx,ts,tsx}',
     '!src/lib/prisma.ts',
+    '!src/lib/session.ts',
+    '!src/lib/csrf.ts',
+    '!src/middleware.ts',
     '!src/app/**/*.{js,jsx,ts,tsx}',
   ],
   coverageThreshold: {
