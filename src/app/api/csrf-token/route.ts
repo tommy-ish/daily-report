@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { generateCsrfToken } from '@/lib/csrf';
 import { isAuthenticated } from '@/lib/session';
 

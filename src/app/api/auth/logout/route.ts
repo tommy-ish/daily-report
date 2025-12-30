@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { destroySession, isAuthenticated } from '@/lib/session';
+
 import { resetCsrfToken } from '@/lib/csrf';
+import { destroySession, isAuthenticated } from '@/lib/session';
 
 /**
  * POST /api/auth/logout
