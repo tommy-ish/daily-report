@@ -135,7 +135,10 @@
     "coverage/",
     "*.config.js",
     "*.config.ts",
-    "jest.setup.js"
+    "jest.setup.js",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx"
   ],
   "overrides": [
     {
