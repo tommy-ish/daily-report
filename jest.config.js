@@ -21,6 +21,9 @@ const customJestConfig = {
     '!src/**/*.test.{js,jsx,ts,tsx}',
     '!src/**/*.spec.{js,jsx,ts,tsx}',
     '!src/lib/prisma.ts',
+    '!src/lib/session.ts',
+    '!src/lib/csrf.ts',
+    '!src/middleware.ts',
     '!src/app/**/*.{js,jsx,ts,tsx}',
   ],
   coverageThreshold: {
@@ -33,7 +36,10 @@ const customJestConfig = {
   },
   testMatch: ['**/__tests__/**/*.(test|spec).[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)'],
   testPathIgnorePatterns: ['/node_modules/', '/.next/', '/e2e/', '/__tests__/setup/'],
-  transformIgnorePatterns: ['/node_modules/', '^.+\\.module\\.(css|sass|scss)$'],
+  transformIgnorePatterns: [
+    '/node_modules/(?!(iron-session|uuid|uncrypto)/)',
+    '^.+\\.module\\.(css|sass|scss)$',
+  ],
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

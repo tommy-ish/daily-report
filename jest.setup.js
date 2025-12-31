@@ -46,3 +46,4 @@ jest.mock('@/lib/prisma', () => ({
 // 環境変数のモック
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test_db?schema=public';
 process.env.NODE_ENV = 'test';
+process.env.SESSION_SECRET = 'test-session-secret-at-least-32-characters-long-for-testing';

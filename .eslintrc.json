@@ -1,4 +1,5 @@
 {
+  "root": true,
   "env": {
     "browser": true,
     "es2021": true,
@@ -26,7 +27,6 @@
   },
   "plugins": ["@typescript-eslint", "react", "react-hooks", "jsx-a11y", "import"],
   "rules": {
-    // TypeScript
     "@typescript-eslint/no-unused-vars": [
       "error",
       {
@@ -37,15 +37,11 @@
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-non-null-assertion": "warn",
-
-    // React
     "react/react-in-jsx-scope": "off",
     "react/prop-types": "off",
     "react/jsx-no-target-blank": "error",
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
-
-    // Import
     "import/order": [
       "error",
       {
@@ -86,8 +82,6 @@
     ],
     "import/no-unresolved": "error",
     "import/no-duplicates": "error",
-
-    // General
     "no-console": [
       "warn",
       {
@@ -101,8 +95,6 @@
     "prefer-template": "error",
     "eqeqeq": ["error", "always"],
     "curly": ["error", "all"],
-
-    // Accessibility
     "jsx-a11y/anchor-is-valid": [
       "error",
       {
@@ -134,8 +126,7 @@
     "dist/",
     "coverage/",
     "*.config.js",
-    "*.config.ts",
-    "jest.setup.js"
+    "*.config.ts"
   ],
   "overrides": [
     {
