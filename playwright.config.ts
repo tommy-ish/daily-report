@@ -4,7 +4,9 @@ import { defineConfig, devices } from '@playwright/test';
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-// require('dotenv').config();
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -62,5 +64,16 @@ export default defineConfig({
     command: 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
+    timeout: 120000, // Increase timeout to 120 seconds for CI
+    env: {
+      // Ensure SESSION_SECRET is available for the dev server
+      SESSION_SECRET:
+        process.env.SESSION_SECRET ||
+        'test-session-secret-at-least-32-characters-long-for-e2e-testing',
+      DATABASE_URL:
+        process.env.DATABASE_URL ||
+        'postgresql://postgres:postgres@localhost:5432/test_db?schema=public',
+      NODE_ENV: process.env.NODE_ENV || 'test',
+    },
   },
 });
